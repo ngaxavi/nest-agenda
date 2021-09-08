@@ -1,10 +1,24 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { ConfigModule, ConfigService } from './core/config';
+import { config } from './app.config';
+import { MongooseModule } from '@nestjs/mongoose';
+import { JobsModule } from './jobs/jobs.module';
+
+const configProvider = {
+  provide: 'CONFIG',
+  useValue: new ConfigService(config).getConfig(),
+};
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    ConfigModule.forRoot(config),
+    MongooseModule.forRootAsync({
+      useFactory: async (configService: ConfigService) =>
+        configService.getMongo(),
+      inject: [ConfigService],
+    }),
+    JobsModule,
+  ],
+  providers: [configProvider],
 })
 export class AppModule {}
